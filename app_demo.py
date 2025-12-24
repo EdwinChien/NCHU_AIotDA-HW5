@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 st.title("🧠 AI / Human 文章偵測器")
-st.caption("TF-IDF + Logistic Regression (Streamlit Cloud)")
+st.caption("TF-IDF + Logistic Regression (Streamlit Cloud Friendly)")
 
 # =========================
 # Cache dataset + model
