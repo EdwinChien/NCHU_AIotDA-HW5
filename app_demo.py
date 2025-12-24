@@ -1,5 +1,5 @@
 import streamlit as st
-import joblib
+from transformers import pipeline
 
 st.set_page_config(
     page_title="AI / Human 文章偵測器",
@@ -7,13 +7,18 @@ st.set_page_config(
 )
 
 st.title("🧠 AI / Human 文章偵測器")
-st.caption("TF-IDF + Logistic Regression")
+st.caption("Powered by Hugging Face Transformers")
 
 @st.cache_resource
-def load_model():
-    return joblib.load("model/model.pkl")
+def load_detector():
+    return pipeline(
+        "text-classification",
+        model="roberta-base-openai-detector",
+        tokenizer="roberta-base-openai-detector",
+        return_all_scores=True
+    )
 
-model = load_model()
+detector = load_detector()
 
 text = st.text_area(
     "請輸入文章內容",
@@ -26,10 +31,13 @@ if st.button("📊 分析"):
         st.warning("請輸入文字")
     else:
         with st.spinner("分析中..."):
-            proba = model.predict_proba([text])[0]
+            result = detector(text)[0]
 
-        human = proba[0] * 100
-        ai = proba[1] * 100
+        # label 轉換
+        scores = {r["label"]: r["score"] for r in result}
+
+        ai = scores.get("AI", scores.get("LABEL_1", 0)) * 100
+        human = scores.get("HUMAN", scores.get("LABEL_0", 0)) * 100
 
         col1, col2 = st.columns(2)
         col1.metric("👤 Human", f"{human:.2f}%")
@@ -39,8 +47,3 @@ if st.button("📊 分析"):
             st.success("➡️ 判定：AI 生成文本")
         else:
             st.info("➡️ 判定：人類撰寫文本")
-
-        st.bar_chart({
-            "Human (%)": human,
-            "AI (%)": ai
-        })
