@@ -2,8 +2,6 @@ import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
-from datasets import load_dataset
 
 st.set_page_config(
     page_title="AI / Human 文章偵測器",
@@ -11,31 +9,29 @@ st.set_page_config(
 )
 
 st.title("🧠 AI / Human 文章偵測器")
-st.caption("TF-IDF + Logistic Regression (Streamlit Cloud Friendly)")
+st.caption("TF-IDF + Logistic Regression (Streamlit Cloud Safe)")
 
 # =========================
-# Cache dataset + model
+# 建立示範資料
 # =========================
 @st.cache_resource
 def build_model():
-    # 下載 MAGE dataset（Hugging Face）
-    dataset = load_dataset("yaful/MAGE", split="train")
-    df = dataset.to_pandas()[["text", "label"]].dropna()
+    # Sample texts
+    texts = [
+        "I went to the store today and bought some apples.",
+        "The stock market fluctuates daily based on investor sentiment.",
+        "Artificial intelligence can generate human-like text easily.",
+        "GPT models are trained on massive datasets to predict text.",
+        "The cat sat on the mat and purred softly."
+    ]
+    labels = [0, 0, 1, 1, 0]  # 0=Human, 1=AI
 
-    # 減少資料量，避免 Streamlit Cloud 卡
-    df = df.sample(5000, random_state=42)  # demo 用
-    X_train, X_test, y_train, y_test = train_test_split(
-        df["text"], df["label"], test_size=0.2, random_state=42, stratify=df["label"]
-    )
-
-    # Pipeline：TF-IDF + LogisticRegression
     pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1,2), stop_words="english")),
+        ("tfidf", TfidfVectorizer(max_features=1000, ngram_range=(1,2), stop_words="english")),
         ("clf", LogisticRegression(max_iter=2000))
     ])
 
-    pipeline.fit(X_train, y_train)
-
+    pipeline.fit(texts, labels)
     return pipeline
 
 model = build_model()
